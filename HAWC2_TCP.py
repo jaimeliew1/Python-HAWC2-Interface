@@ -8,9 +8,53 @@ Description : A Python wrapper class for interfacing HAWC2 simulations via TCP.
               The HAWC2 simulation requires a TCP DLL.
 """
 
-import socket
+import os, socket, time, threading
 import numpy as np
-import time
+
+
+
+class HAWC2Interface(object):
+    def __init__(self, modeldir, port=1239):
+        self.modeldir = modeldir
+        self.port = port
+
+
+    def update(self, array1):
+        return [0]
+
+
+
+    def run(self, htc_filename, N_iter, kill=True):
+        if kill:
+            os.system('taskkill /f /im hawc2mb.exe')
+
+        # change directory to wind turbine model directory.
+        cwd = os.getcwd()
+        os.chdir(self.modeldir)
+
+        # Run HAWC2 simulation by starting another thread.
+        def Thread_HAWC2_func():
+            os.system('hawc2MB.exe ' + htc_filename)
+        thread_HAWC2 = threading.Thread(target=Thread_HAWC2_func)
+        thread_HAWC2.start()
+
+        # Connect Python to HAWC2 via TCP
+        HAWC2 = HAWC2_TCP(PORT=self.port)
+
+        # main iteration loop
+        for i in range(N_iter - 1):
+            inData  = HAWC2.getMessage(Nkeep=3)
+            outData = self.update(inData)
+            HAWC2.sendMessage(outData)
+
+        HAWC2.close()
+        thread_HAWC2.join()
+
+        os.chdir(cwd)
+
+
+
+
 
 class HAWC2_TCP(object):
     def __init__(self, PORT=None, TCP_IP='127.0.0.1',connectAttempts=20):
