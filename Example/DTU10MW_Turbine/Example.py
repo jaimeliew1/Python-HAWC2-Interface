@@ -9,7 +9,6 @@ demand to each blade.
 """
 
 from HAWC2_TCP import HAWC2Interface
-import numpy as np
 from numpy import pi, cos
 
 
@@ -30,8 +29,7 @@ class ExamplePitchSineWave(HAWC2Interface):
     # Set this function to what you want.
     def update(self, array1):
         t, azim = array1[0], array1[1]
-
-        print('\r Time elapsed: {:2.2f}s'.format(t), end='')
+        #print('\r Time elapsed: {:2.2f}s'.format(t), end='')
 
         theta    =   [0,0,0]
         theta[0] =   self.amp*cos(azim + 0.174)
@@ -40,13 +38,12 @@ class ExamplePitchSineWave(HAWC2Interface):
 
         return theta
 
+if __name__ == '__main__':
 
-simTime, sampleTime = 100, 0.01
-N_iters = int(simTime/sampleTime)
+    simTime, sampleTime = 100, 0.01
+    N_iters = int(simTime/sampleTime)
 
-
-HAWC2 = ExamplePitchSineWave('DTU10MW_Turbine/', 0.02)
-# run the simulation by specifying the htc filepath (relative to the
-# model directory) and the number of iterations in the simulation.
-HAWC2.run('htc/TCPExample.htc', N_iters)
-
+    HAWC2 = ExamplePitchSineWave('./', 0.02)
+    # run the simulation by specifying the htc filepath (relative to the
+    # model directory) and the number of iterations in the simulation.
+    HAWC2.run('htc/TCPExample.htc', N_iters)

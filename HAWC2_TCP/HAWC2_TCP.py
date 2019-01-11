@@ -10,6 +10,7 @@ Description : A Python wrapper class for interfacing HAWC2 simulations via TCP.
 
 import os, socket, time, threading
 import numpy as np
+import click
 
 
 
@@ -24,7 +25,7 @@ class HAWC2Interface(object):
 
 
 
-    def run(self, htc_filename, N_iter, kill=True):
+    def run(self, htc_filename, N_iter, kill=True, progressbar=True):
         if kill:
             os.system('taskkill /f /im hawc2mb.exe')
 
@@ -42,11 +43,17 @@ class HAWC2Interface(object):
         HAWC2 = HAWC2_TCP(PORT=self.port)
 
         # main iteration loop
-        for i in range(N_iter - 1):
-            inData  = HAWC2.getMessage(Nkeep=3)
-            outData = self.update(inData)
-            HAWC2.sendMessage(outData)
-
+        if progressbar:
+            with click.progressbar(range(N_iter-1), label=htc_filename) as bar:
+                for i in bar:
+                    inData  = HAWC2.getMessage(Nkeep=3)
+                    outData = self.update(inData)
+                    HAWC2.sendMessage(outData)
+        else:
+            for i in bar:
+                inData  = HAWC2.getMessage(Nkeep=3)
+                outData = self.update(inData)
+                HAWC2.sendMessage(outData)
         HAWC2.close()
         thread_HAWC2.join()
 
