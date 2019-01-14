@@ -15,19 +15,21 @@ import click
 
 
 class HAWC2Interface(object):
-    def __init__(self, modeldir, port=1239):
-        self.modeldir = modeldir
-        self.port = port
+    def __init__(self, hawc2_command, update_func, modeldir='./', port=1239):
+        self.hawc2_command = hawc2_command
+        self.update_func   = update_func
+        self.modeldir      = modeldir
+        self.port          = port
 
 
-    def update(self, array1):
-        return [0]
+    def update(self, array1, **kwargs):
+        return self.update_func(array1, **kwargs)
 
 
 
-    def run(self, htc_filename, N_iter, kill=True, progressbar=True):
+    def run(self, htc_filename, N_iter, kill=True, progressbar=True, **kwargs):
         if kill:
-            os.system('taskkill /f /im hawc2mb.exe')
+            os.system('taskkill /f /im {}'.format(self.hawc2_command))
 
         # change directory to wind turbine model directory.
         cwd = os.getcwd()
@@ -35,7 +37,7 @@ class HAWC2Interface(object):
 
         # Run HAWC2 simulation by starting another thread.
         def Thread_HAWC2_func():
-            os.system('hawc2MB.exe ' + htc_filename)
+            os.system('{} {}'.format(self.hawc2_command, htc_filename))
         thread_HAWC2 = threading.Thread(target=Thread_HAWC2_func)
         thread_HAWC2.start()
 
@@ -47,12 +49,12 @@ class HAWC2Interface(object):
             with click.progressbar(range(N_iter-1), label=htc_filename) as bar:
                 for i in bar:
                     inData  = HAWC2.getMessage(Nkeep=3)
-                    outData = self.update(inData)
+                    outData = self.update(inData, **kwargs)
                     HAWC2.sendMessage(outData)
         else:
             for i in bar:
                 inData  = HAWC2.getMessage(Nkeep=3)
-                outData = self.update(inData)
+                outData = self.update(inData **kwargs)
                 HAWC2.sendMessage(outData)
         HAWC2.close()
         thread_HAWC2.join()
