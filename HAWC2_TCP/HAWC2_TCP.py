@@ -48,13 +48,13 @@ class HAWC2Interface(object):
         if progressbar:
             with click.progressbar(range(N_iter-1), label=htc_filename) as bar:
                 for i in bar:
-                    inData  = HAWC2.getMessage(Nkeep=3)
+                    inData  = HAWC2.getMessage()
                     outData = self.update(inData, **kwargs)
                     HAWC2.sendMessage(outData)
         else:
-            for i in bar:
-                inData  = HAWC2.getMessage(Nkeep=3)
-                outData = self.update(inData **kwargs)
+            for i in range(N_iter-1):
+                inData  = HAWC2.getMessage()
+                outData = self.update(inData, **kwargs)
                 HAWC2.sendMessage(outData)
         HAWC2.close()
         thread_HAWC2.join()
@@ -97,7 +97,7 @@ class HAWC2_TCP(object):
                 time.sleep(1)
 
 
-    def getMessage(self, Nkeep=None, keys=None, BUFFER_SIZE=1024):
+    def getMessage(self, Nkeep=10, keys=None, BUFFER_SIZE=1024):
         #Waits until a message is received from HAWC2, and returns the message
         #in a numpy array. Keeps the first Nkeep elements. if Nkeep is not
         #provided, all elements are returned.
