@@ -108,9 +108,21 @@ class HAWC2_TCP(object):
         message = self.socket.recv(BUFFER_SIZE)
         data = message.decode('utf-8')
         if Nkeep is not None:
-            data = np.array([float(x) for x in data.split(';')[1:Nkeep+1]])
+            try:
+                data = np.array([float(x) for x in data.split(';')[1:Nkeep+1]])
+            except ValueError:
+                print('Something went wrong with reading data from HAWC2:')
+                for i, val in enumerate(data.split(';')[1:Nkeep+1]):
+                    print('input {}: {}'.format(i, val))
+                raise
         else:
-            data = np.array([float(x) for x in data.split(';')[1:]])
+            try:
+                data = np.array([float(x) for x in data.split(';')[1:]])
+            except ValueError:
+                print('Something went wrong with reading data from HAWC2:')
+                for i, val in enumerate(data.split(';')[1:]):
+                    print('input {}: {}'.format(i, val))
+                raise
 
         if keys is not None:
             assert len(keys) == Nkeep
