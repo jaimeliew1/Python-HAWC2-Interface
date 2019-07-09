@@ -29,7 +29,7 @@ class HAWC2Interface(object):
 
     def run(self, htc_filename, N_iter, kill=True, progressbar=True, **kwargs):
         if kill:
-            os.system('taskkill /f /im {}'.format(self.hawc2_command))
+            os.system('taskkill /f /im {} 2>nul'.format(self.hawc2_command))
 
         # change directory to wind turbine model directory.
         cwd = os.getcwd()
