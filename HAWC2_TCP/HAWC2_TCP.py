@@ -15,44 +15,54 @@ import click
 
 
 class HAWC2Interface(object):
-    def __init__(self, hawc2_command, update_func, modeldir='./', port=1239):
-        self.hawc2_command = hawc2_command
-        self.update_func   = update_func
-        self.modeldir      = modeldir
-        self.port          = port
-
-
-    def update(self, array1, **kwargs):
-        return self.update_func(array1, **kwargs)
+    HAWC2_command = 'hawc2mb.exe'
+    modeldir      = './'
+    N_iter        = 10000
 
 
 
-    def run(self, htc_filename, N_iter, kill=True, progressbar=True, **kwargs):
-        if kill:
-            os.system('taskkill /f /im {} 2>nul'.format(self.hawc2_command))
+    @classmethod    
+    def update_function(cls, func):
+        '''
+        Function decorator which sets the update function.
+        '''
+        setattr(cls, 'update', func)
+        return func 
 
+
+
+    @staticmethod
+    def update(array1, **kwargs):
+        '''
+        Function which is interfaced with HAWC2. This function is called at every time step of the simulation. This function is to be overwritten using the decorator, update_function.
+        '''
+        return array1
+
+
+    @classmethod 
+    def run(self, htc_filename, progressbar=True, port=1239, **kwargs):
         # change directory to wind turbine model directory.
         cwd = os.getcwd()
         os.chdir(self.modeldir)
 
         # Run HAWC2 simulation by starting another thread.
         def Thread_HAWC2_func():
-            os.system('{} {}'.format(self.hawc2_command, htc_filename))
+            os.system('{} {}'.format(self.HAWC2_command, htc_filename))
         thread_HAWC2 = threading.Thread(target=Thread_HAWC2_func)
         thread_HAWC2.start()
 
         # Connect Python to HAWC2 via TCP
-        HAWC2 = HAWC2_TCP(PORT=self.port)
+        HAWC2 = HAWC2_TCP(PORT=port)
 
         # main iteration loop
         if progressbar:
-            with click.progressbar(range(N_iter-1), label=htc_filename) as bar:
+            with click.progressbar(range(self.N_iter-1), label=htc_filename) as bar:
                 for i in bar:
                     inData  = HAWC2.getMessage()
                     outData = self.update(inData, **kwargs)
                     HAWC2.sendMessage(outData)
         else:
-            for i in range(N_iter-1):
+            for i in range(self.N_iter-1):
                 inData  = HAWC2.getMessage()
                 outData = self.update(inData, **kwargs)
                 HAWC2.sendMessage(outData)
